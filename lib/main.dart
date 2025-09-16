@@ -42,10 +42,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
     '7', '8', '9', '-',
     '4', '5', '6', '+',
     '1', '2', '3', '=',
-    '0', '.', '',  '',
+    '0', '.', '%', 'x²',
   ];
 
-  bool _isOp(String s) => s == '+' || s == '-' || s == '*' || s == '/';
+  bool _isOp(String s) => s == '+' || s == '-' || s == '*' || s == '/' || s == '%';
 
   void _press(String key) {
     if (key.isEmpty) return;
@@ -75,6 +75,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
         _evaluateFinal();
         return;
       }
+      if (key == 'x²') {
+        _applySquare();
+        return;
+      }
       if (_justEvaluated) {
         if (_isOp(key)) {
           _expr = _result;
@@ -97,6 +101,25 @@ class _CalculatorPageState extends State<CalculatorPage> {
       _expr = _expr.replaceAll(RegExp(r'\s+'), ' ');
       _tryPreview();
     });
+  }
+
+  void _applySquare() {
+    if (_justEvaluated) {
+      _expr = _result;
+      _justEvaluated = false;
+    }
+    final raw = _expr.trimRight();
+    if (raw.isEmpty) return;
+    final match = RegExp(r'(\d+(\.\d+)?)$').firstMatch(raw);
+    if (match == null) {
+      return;
+    }
+    final numText = match.group(1)!;
+    final start = match.start;
+    final before = raw.substring(0, start);
+    final replaced = '$before($numText)*($numText)';
+    _expr = replaced;
+    _tryPreview();
   }
 
   void _evaluateFinal() {
@@ -149,6 +172,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
         .replaceAll('/', ' / ')
         .replaceAll('+', ' + ')
         .replaceAll('-', ' - ')
+        .replaceAll('%', ' % ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
@@ -174,7 +198,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
     final s = n.toString();
     if (s.contains('e') || s.contains('E')) return s;
     if (n is int || n == n.roundToDouble()) return n.round().toString();
-    final asFixed = (n as num).toStringAsFixed(10);
+    final asFixed = (n).toStringAsFixed(10);
     return asFixed.replaceFirst(RegExp(r'\.?0+$'), '');
   }
 
